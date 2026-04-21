@@ -1,91 +1,83 @@
-# PromptForge 🔨⚡
+# PromptForge
 
-**Describe a Solana program in plain English. Deploy it to devnet in 60 seconds.**
+**Anchor scaffolding infrastructure with verified compilation.**
 
-PromptForge is a natural-language-to-Anchor IDE that turns English descriptions into fully deployed Solana programs — with generated tests, an explorer link, and a Phantom wallet button to interact with your program instantly.
+> *PromptForge is the Vercel of Solana programs — type what you want, get a compiled Anchor program deployed to devnet in 60 seconds.*
+
+No hallucinated APIs. No broken builds. Every output is a real `.so` file that passed `anchor build`.
 
 > *"Operationalizing the ZETA Framework — from IEEE research paper to shipping product."*
 
 ## The Research Foundation
 
-This project operationalizes concepts from the **ZETA Framework** ([IEEE ICOSEC 2025, pp. 1777–1783](https://ieeexplore.ieee.org/)), a published research paper on zero-shot task automation using foundation language models. ZETA demonstrated that hierarchical planning with LLMs can decompose complex tasks into executable sub-steps without prior training. PromptForge applies this principle to Solana program development — decomposing natural-language specifications into composable Anchor program patterns, then building and deploying them autonomously.
+This project operationalizes concepts from the **ZETA Framework** ([IEEE ICOSEC 2025, pp. 1777–1783](https://ieeexplore.ieee.org/)), a published research paper on zero-shot task automation using foundation language models. ZETA demonstrated that hierarchical planning with LLMs can decompose complex tasks into executable sub-steps without prior training. PromptForge applies this to Solana program development: decomposing natural-language specifications into composable Anchor patterns, compiling them with `anchor build`, and deploying the resulting bytecode — all autonomously.
+
+The key insight: use LLMs for **decomposition and composition**, not for writing raw Anchor code from scratch. The template library is the safety net that keeps compilation deterministic.
 
 ## How It Works
 
 ```
-"Create a token with a 2% transfer fee, sending fees to my wallet"
-                              ↓
-              PromptForge decomposes the spec
-                              ↓
-            Selects from composable template library
-                              ↓
-              Generates complete Anchor project
-                              ↓
-                    cargo build-sbf
-                              ↓
-                  solana program deploy
-                              ↓
-              Live on devnet in ~60 seconds
-              Explorer link + Phantom connect
+"Create a token vesting schedule with a 6-month cliff"
+                          ↓
+        PromptForge decomposes the spec (ZETA)
+                          ↓
+      Selects + composes from template library
+                          ↓
+         Generates complete Anchor.toml project
+                          ↓
+               anchor build  ← verified here
+                          ↓
+       solana program deploy --provider.cluster devnet
+                          ↓
+        Live on devnet. Explorer link returned.
 ```
+
+The build step is not optional. If `anchor build` fails, PromptForge reports the compiler errors and exits — it never returns an uncompilable program.
 
 ## Quick Start
 
 ```bash
-# Install dependencies
 npm install
-
-# Set your API key
-export ANTHROPIC_API_KEY=your_key_here
-
-# Run the CLI
-npx ts-node src/cli.ts "Create an SPL token with a 2% transfer fee"
-
-# Or start the web UI
-npm run dev
+export ANTHROPIC_API_KEY=sk-ant-...
+npx ts-node src/cli.ts "Create a payment splitter with 3 recipients"
 ```
+
+The terminal streams the full `anchor build` log in real time. You see the compilation succeed before you see the generated code.
 
 ## Template Library
 
-PromptForge doesn't hallucinate code from scratch. It composes from a curated library of battle-tested Anchor patterns:
+PromptForge doesn't write Anchor code from scratch. It selects and composes from a library of hand-written, anchor-lang 0.30.1 templates:
 
 | Template | Description |
 |----------|-------------|
-| `spl-token-basic` | Standard SPL token mint + transfer |
-| `spl-token-fee` | Token with transfer fee extension (Token-2022) |
-| `escrow` | Two-party escrow with timelock |
-| `vesting` | Linear token vesting schedule |
-| `vault` | Deposit/withdraw vault with authority |
-| `staking` | Single-asset staking with rewards |
-| `payments` | Payment splitter with configurable recipients |
-| `dao-voting` | Simple proposal + vote system |
+| `spl-token-basic` | Standard SPL token — mint, transfer, burn |
+| `escrow` | Two-party time-locked escrow |
+| `vesting` | Linear unlock schedule with configurable cliff |
+| `vault` | Per-user deposit/withdraw vault |
+| `payments` | Payment splitter, up to 5 recipients, basis-point shares |
 
-More templates are added continuously. Each template is individually tested and audited for common vulnerabilities.
+Each template compiles standalone. Composition merges them into a single `lib.rs`. The LLM never invents an Anchor API — it only fills in parameters and wires templates together.
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────┐
-│              Web UI (Next.js)           │
-│  Monaco Editor │ Stream Output │ Wallet │
-└──────────────────┬──────────────────────┘
-                   │ API
-┌──────────────────▼──────────────────────┐
-│           Orchestrator (Node.js)        │
+│           Orchestrator (Claude API)     │
 │                                         │
 │  1. Parse natural language spec         │
-│  2. Select + compose templates          │
-│  3. Generate Anchor project             │
-│  4. cargo build-sbf (Docker)            │
-│  5. solana program deploy (devnet)      │
-│  6. Return explorer link + IDL          │
+│  2. Select templates from library       │
+│  3. Compose + parameterize lib.rs       │
+│  4. Scaffold full Anchor project        │
+│  5. anchor build  (verified compile)    │
+│  6. solana program deploy (devnet)      │
+│  7. Return program ID + explorer link   │
 └─────────────────────────────────────────┘
 ```
 
 ## Built For
 
-- **Solana Frontier Hackathon 2026** — Colosseum
-- **University Award Track** — Chennai Institute of Technology (CIT), B.Tech CSE
+- **Solana Frontier Hackathon 2026** — Colosseum (Infrastructure Track)
+- **Superteam India Payments Track** — payments template targets this directly
 
 ## Builder
 

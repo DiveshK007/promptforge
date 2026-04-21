@@ -1,0 +1,12 @@
+{
+  "id": "payments",
+  "name": "Payment Splitter",
+  "description": "Splits deposited tokens among up to 5 recipients by basis-point shares. Anyone can deposit; distribute sends proportional amounts to all recipients at once.",
+  "keywords": ["payments", "split", "distribute", "revenue", "share", "royalty", "splitter", "multi-party", "payroll"],
+  "composable_with": ["spl-token-basic"],
+  "complexity": "medium",
+  "anchor_version": "0.30.1",
+  "dependencies": {
+    "anchor-spl": "0.30.1"
+  }
+}

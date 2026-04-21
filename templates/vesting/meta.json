@@ -1,0 +1,12 @@
+{
+  "id": "vesting",
+  "name": "Linear Token Vesting",
+  "description": "Linear unlock vesting schedule with configurable cliff, start time, and duration. Beneficiary claims pro-rata tokens as time elapses.",
+  "keywords": ["vesting", "unlock", "linear", "cliff", "schedule", "release", "team", "investor", "lockup"],
+  "composable_with": ["spl-token-basic"],
+  "complexity": "medium",
+  "anchor_version": "0.30.1",
+  "dependencies": {
+    "anchor-spl": "0.30.1"
+  }
+}

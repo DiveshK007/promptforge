@@ -2,6 +2,36 @@
 
 import { generateProgram } from "./orchestrator";
 import { scaffoldProject } from "./scaffolder";
+import { spawn } from "child_process";
+
+function runAnchorBuild(projectDir: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const child = spawn("anchor", ["build"], {
+      cwd: projectDir,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    child.stdout.on("data", (data: Buffer) => {
+      process.stdout.write(data);
+    });
+
+    child.stderr.on("data", (data: Buffer) => {
+      process.stderr.write(data);
+    });
+
+    child.on("close", (code: number | null) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`anchor build exited with code ${code}`));
+      }
+    });
+
+    child.on("error", (err: Error) => {
+      reject(new Error(`Failed to start anchor build: ${err.message}`));
+    });
+  });
+}
 
 // Simple chalk-like colors without ESM issues
 const green = (s: string) => `\x1b[32m${s}\x1b[0m`;
@@ -67,20 +97,35 @@ ${dim("Set ANTHROPIC_API_KEY environment variable before running.")}
   const projectDir = scaffoldProject(result);
   console.log(`${green("✓")} Project created at ${cyan(projectDir)}\n`);
 
-  // Step 3: Show the generated code
+  // Step 3: Build — this is the proof of work; stream it as the main event
+  console.log(`${bold("━━━ anchor build ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")}\n`);
+  console.log(dim("  (first build downloads crates — subsequent builds are fast)\n"));
+  const startBuild = Date.now();
+  try {
+    await runAnchorBuild(projectDir);
+  } catch (err: any) {
+    console.error(`\n${bold("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")}\n`);
+    console.error(red(`✗ Build failed: ${err.message}`));
+    console.error(dim(`  cd ${projectDir} && anchor build`));
+    process.exit(1);
+  }
+  const buildTime = ((Date.now() - startBuild) / 1000).toFixed(1);
+  console.log(`\n${bold("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")}\n`);
+  console.log(`${green("✓")} Compiled in ${buildTime}s — ${green(bold("program bytecode ready"))}\n`);
+
+  // Step 4: Show the generated code (after the build proof)
   console.log(`${bold("━━━ Generated lib.rs ━━━")}\n`);
   console.log(dim(result.anchorCode));
   console.log(`\n${bold("━━━━━━━━━━━━━━━━━━━━━━━")}\n`);
 
-  // Step 4: Next steps
+  // Step 5: Next steps
   console.log(`${bold("Next steps:")}`);
   console.log(`  1. ${cyan(`cd ${projectDir}`)}`);
-  console.log(`  2. ${cyan("anchor build")} ${dim("(compile the program)")}`);
   console.log(
-    `  3. ${cyan("anchor deploy --provider.cluster devnet")} ${dim("(deploy to devnet)")}`
+    `  2. ${cyan("anchor deploy --provider.cluster devnet")} ${dim("(deploy to devnet)")}`
   );
   console.log(
-    `  4. ${dim("View on explorer:")} ${cyan("https://explorer.solana.com/address/<PROGRAM_ID>?cluster=devnet")}\n`
+    `  3. ${dim("View on explorer:")} ${cyan("https://explorer.solana.com/address/<PROGRAM_ID>?cluster=devnet")}\n`
   );
 }
 

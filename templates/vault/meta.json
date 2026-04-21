@@ -1,0 +1,12 @@
+{
+  "id": "vault",
+  "name": "Token Vault",
+  "description": "Per-user token vault with deposit and withdraw instructions. Each owner gets a dedicated PDA token account.",
+  "keywords": ["vault", "deposit", "withdraw", "store", "custody", "safe", "savings", "hold"],
+  "composable_with": ["spl-token-basic", "vesting"],
+  "complexity": "low",
+  "anchor_version": "0.30.1",
+  "dependencies": {
+    "anchor-spl": "0.30.1"
+  }
+}

@@ -6,3 +6,6 @@ output/
 target/
 *.so
 .DS_Store
+.agents/
+.claude/
+skills-lock.json
