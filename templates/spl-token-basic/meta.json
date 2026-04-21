@@ -1,0 +1,12 @@
+{
+  "id": "spl-token-basic",
+  "name": "Basic SPL Token",
+  "description": "Standard SPL token with mint, transfer, and burn capabilities",
+  "keywords": ["token", "mint", "transfer", "spl", "fungible", "erc20", "currency", "coin"],
+  "composable_with": ["vesting", "staking", "escrow"],
+  "complexity": "low",
+  "anchor_version": "0.30.1",
+  "dependencies": {
+    "anchor-spl": "0.30.1"
+  }
+}

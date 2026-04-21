@@ -1,0 +1,12 @@
+{
+  "id": "escrow",
+  "name": "Two-Party Escrow",
+  "description": "Time-locked escrow that holds tokens until a specified unlock time, then releases to recipient",
+  "keywords": ["escrow", "lock", "timelock", "hold", "release", "custody", "safe", "trust"],
+  "composable_with": ["spl-token-basic"],
+  "complexity": "medium",
+  "anchor_version": "0.30.1",
+  "dependencies": {
+    "anchor-spl": "0.30.1"
+  }
+}
