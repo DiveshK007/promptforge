@@ -6,10 +6,12 @@ import { spawn } from "child_process";
 
 function runAnchorBuild(projectDir: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const child = spawn("anchor", ["build"], {
+    const child = spawn("cargo", ["build-sbf"], {
       cwd: projectDir,
       stdio: ["ignore", "pipe", "pipe"],
     });
+
+    let stderrBuf = "";
 
     child.stdout.on("data", (data: Buffer) => {
       process.stdout.write(data);
@@ -17,18 +19,19 @@ function runAnchorBuild(projectDir: string): Promise<void> {
 
     child.stderr.on("data", (data: Buffer) => {
       process.stderr.write(data);
+      stderrBuf += data.toString();
     });
 
     child.on("close", (code: number | null) => {
-      if (code === 0) {
-        resolve();
+      if (code !== 0) {
+        reject(new Error(`cargo build-sbf exited with code ${code}`));
       } else {
-        reject(new Error(`anchor build exited with code ${code}`));
+        resolve();
       }
     });
 
     child.on("error", (err: Error) => {
-      reject(new Error(`Failed to start anchor build: ${err.message}`));
+      reject(new Error(`Failed to start cargo build-sbf: ${err.message}`));
     });
   });
 }
@@ -98,7 +101,7 @@ ${dim("Set ANTHROPIC_API_KEY environment variable before running.")}
   console.log(`${green("✓")} Project created at ${cyan(projectDir)}\n`);
 
   // Step 3: Build — this is the proof of work; stream it as the main event
-  console.log(`${bold("━━━ anchor build ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")}\n`);
+  console.log(`${bold("━━━ cargo build-sbf ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")}\n`);
   console.log(dim("  (first build downloads crates — subsequent builds are fast)\n"));
   const startBuild = Date.now();
   try {
@@ -106,7 +109,7 @@ ${dim("Set ANTHROPIC_API_KEY environment variable before running.")}
   } catch (err: any) {
     console.error(`\n${bold("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")}\n`);
     console.error(red(`✗ Build failed: ${err.message}`));
-    console.error(dim(`  cd ${projectDir} && anchor build`));
+    console.error(dim(`  cd ${projectDir} && cargo build-sbf`));
     process.exit(1);
   }
   const buildTime = ((Date.now() - startBuild) / 1000).toFixed(1);
