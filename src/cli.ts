@@ -3,6 +3,44 @@
 import { generateProgram } from "./orchestrator";
 import { scaffoldProject } from "./scaffolder";
 import { spawn } from "child_process";
+import * as path from "path";
+
+function runDeploy(soPath: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const child = spawn("solana", ["program", "deploy", soPath, "--url", "devnet"], {
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    let outBuf = "";
+
+    child.stdout.on("data", (data: Buffer) => {
+      process.stdout.write(data);
+      outBuf += data.toString();
+    });
+
+    child.stderr.on("data", (data: Buffer) => {
+      process.stderr.write(data);
+      outBuf += data.toString();
+    });
+
+    child.on("close", (code: number | null) => {
+      if (code !== 0) {
+        reject(new Error(`solana program deploy exited with code ${code}`));
+        return;
+      }
+      const match = outBuf.match(/Program Id:\s*([1-9A-HJ-NP-Za-km-z]{32,44})/);
+      if (!match) {
+        reject(new Error("Deploy succeeded but could not parse Program ID from output"));
+        return;
+      }
+      resolve(match[1]);
+    });
+
+    child.on("error", (err: Error) => {
+      reject(new Error(`Failed to start solana program deploy: ${err.message}`));
+    });
+  });
+}
 
 function runAnchorBuild(projectDir: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -116,20 +154,28 @@ ${dim("Set ANTHROPIC_API_KEY environment variable before running.")}
   console.log(`\n${bold("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")}\n`);
   console.log(`${green("✓")} Compiled in ${buildTime}s — ${green(bold("program bytecode ready"))}\n`);
 
-  // Step 4: Show the generated code (after the build proof)
+  // Step 4: Deploy
+  const soPath = path.join(projectDir, "target", "deploy", `${result.programName.replace(/-/g, "_")}.so`);
+  console.log(`${bold("━━━ solana deploy ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")}\n`);
+  const startDeploy = Date.now();
+  let programId: string;
+  try {
+    programId = await runDeploy(soPath);
+  } catch (err: any) {
+    console.error(`\n${bold("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")}\n`);
+    console.error(red(`✗ Deploy failed: ${err.message}`));
+    console.error(dim(`  cd ${projectDir} && solana program deploy target/deploy/${result.programName.replace(/-/g, "_")}.so --url devnet`));
+    process.exit(1);
+  }
+  const deployTime = ((Date.now() - startDeploy) / 1000).toFixed(1);
+  console.log(`\n${bold("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")}\n`);
+  console.log(`${green("✓")} Deployed in ${deployTime}s — ${green(bold(`Program ID: ${programId}`))}`);
+  console.log(`${dim("  Explorer:")} ${cyan(`https://explorer.solana.com/address/${programId}?cluster=devnet`)}\n`);
+
+  // Step 5: Show the generated code (after the deploy proof)
   console.log(`${bold("━━━ Generated lib.rs ━━━")}\n`);
   console.log(dim(result.anchorCode));
   console.log(`\n${bold("━━━━━━━━━━━━━━━━━━━━━━━")}\n`);
-
-  // Step 5: Next steps
-  console.log(`${bold("Next steps:")}`);
-  console.log(`  1. ${cyan(`cd ${projectDir}`)}`);
-  console.log(
-    `  2. ${cyan("anchor deploy --provider.cluster devnet")} ${dim("(deploy to devnet)")}`
-  );
-  console.log(
-    `  3. ${dim("View on explorer:")} ${cyan("https://explorer.solana.com/address/<PROGRAM_ID>?cluster=devnet")}\n`
-  );
 }
 
 main().catch((err) => {

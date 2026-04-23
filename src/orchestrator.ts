@@ -76,14 +76,14 @@ ${catalog}
 ${templateCodeRef}
 
 ## Rules
-1. ALWAYS base your output on the templates above. Compose and modify them — never hallucinate Anchor APIs.
+1. ALWAYS base your output on the templates above. Compose them — never hallucinate Anchor APIs.
 2. Output a COMPLETE, COMPILABLE Anchor program in a single lib.rs file.
 3. Use anchor_lang 0.30.1 and anchor_spl 0.30.1.
 4. Replace {{PROGRAM_ID}} with "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS" (placeholder).
 5. Replace {{program_name}} with a snake_case name derived from the user's description.
 6. Include proper error handling with custom error enums.
-7. Add doc comments explaining each instruction.
-8. If the user's request maps to multiple templates, compose them into a single program.
+7. If the user's request maps to multiple templates, compose them into a single program.
+8. CRITICAL: Never modify the body of existing instructions from templates. Use template code exactly as written. Only substitute {{PROGRAM_ID}} and {{program_name}}. Ok(()) must never be changed.
 
 ## Output Format
 Respond with ONLY a JSON object (no markdown, no backticks):
