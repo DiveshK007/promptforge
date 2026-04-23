@@ -77,16 +77,29 @@ export async function POST(req: NextRequest) {
 
         let deployOut = "";
         await new Promise<void>((resolve, reject) => {
-          const child = spawn("solana", ["program", "deploy", soPath, "--url", "devnet"], {
-            stdio: ["ignore", "pipe", "pipe"],
-          });
+          const child = spawn(
+            "solana",
+            [
+              "program", "deploy", soPath,
+              "--url", "devnet",
+              "--keypair", "/Users/bond/.config/solana/apex-bot-devnet.json",
+            ],
+            {
+              stdio: ["ignore", "pipe", "pipe"],
+              env: { ...process.env, HOME: process.env.HOME ?? "/Users/bond" },
+            }
+          );
 
           child.stdout.on("data", (chunk: Buffer) => {
-            deployOut += chunk.toString();
+            const text = chunk.toString();
+            deployOut += text;
+            send({ type: "build_log", data: text });
           });
 
           child.stderr.on("data", (chunk: Buffer) => {
-            deployOut += chunk.toString();
+            const text = chunk.toString();
+            deployOut += text;
+            send({ type: "build_log", data: text });
           });
 
           child.on("close", (code) => {

@@ -9,3 +9,5 @@ target/
 .agents/
 .claude/
 skills-lock.json
+.next/
+output/
