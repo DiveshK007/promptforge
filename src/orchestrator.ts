@@ -20,7 +20,7 @@ interface Template {
 }
 
 function loadTemplates(): Template[] {
-  const templatesDir = path.join(__dirname, "..", "templates");
+  const templatesDir = path.join(process.cwd(), "templates");
   const templateDirs = fs.readdirSync(templatesDir);
 
   return templateDirs

@@ -11,7 +11,7 @@ export function scaffoldProject(
   outputDir?: string
 ): string {
   const projectDir =
-    outputDir || path.join(__dirname, "..", "output", result.programName);
+    outputDir || path.join(process.cwd(), "output", result.programName);
 
   // Create directory structure
   const dirs = [
