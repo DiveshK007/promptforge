@@ -7,6 +7,16 @@ import * as path from "path";
 
 export const runtime = "nodejs";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
+}
+
 function encode(controller: ReadableStreamDefaultController, enc: TextEncoder, event: object) {
   controller.enqueue(enc.encode(JSON.stringify(event) + "\n"));
 }
@@ -18,7 +28,7 @@ export async function POST(req: NextRequest) {
   if (!prompt.trim()) {
     return new Response(JSON.stringify({ error: "prompt is required" }), {
       status: 400,
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   }
 
@@ -175,6 +185,7 @@ export async function POST(req: NextRequest) {
       "Content-Type": "text/plain; charset=utf-8",
       "Cache-Control": "no-cache",
       "X-Accel-Buffering": "no",
+      ...corsHeaders,
     },
   });
 }
