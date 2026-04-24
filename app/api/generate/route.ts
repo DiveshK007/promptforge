@@ -71,6 +71,31 @@ export async function POST(req: NextRequest) {
           data: { duration: `${((Date.now() - buildStart) / 1000).toFixed(1)}s` },
         });
 
+        // ── Balance check (non-blocking) ─────────────────────────────────────
+        try {
+          const balOut = await new Promise<string>((resolve) => {
+            const child = spawn(
+              "solana",
+              ["balance", "--url", "devnet", "--keypair", "/Users/bond/.config/solana/apex-bot-devnet.json"],
+              {
+                stdio: ["ignore", "pipe", "pipe"],
+                env: { ...process.env, HOME: process.env.HOME ?? "/Users/bond" },
+              }
+            );
+            let out = "";
+            child.stdout.on("data", (c: Buffer) => { out += c.toString(); });
+            child.stderr.on("data", (c: Buffer) => { out += c.toString(); });
+            child.on("close", () => resolve(out));
+            child.on("error", () => resolve(""));
+          });
+          const balMatch = balOut.match(/([0-9.]+)\s*SOL/);
+          if (balMatch && parseFloat(balMatch[1]) < 2) {
+            send({ type: "balance_warning", data: balMatch[1].trim() });
+          }
+        } catch {
+          // non-fatal
+        }
+
         // ── Deploy ────────────────────────────────────────────────────────────
         const soName = result.programName.replace(/-/g, "_");
         const soPath = path.join(projectDir, "target", "deploy", `${soName}.so`);

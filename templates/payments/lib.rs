@@ -148,12 +148,18 @@ pub struct Initialize<'info> {
 #[derive(Accounts)]
 pub struct Deposit<'info> {
     pub splitter: Account<'info, PaymentSplitter>,
+    /// CHECK: address constraint verifies this matches splitter.authority
+    #[account(address = splitter.authority)]
+    pub vault_authority: UncheckedAccount<'info>,
+    /// CHECK: address constraint verifies this matches splitter.mint
+    #[account(address = splitter.mint)]
+    pub vault_mint: UncheckedAccount<'info>,
     pub depositor: Signer<'info>,
     #[account(mut)]
     pub depositor_token_account: Account<'info, TokenAccount>,
     #[account(
         mut,
-        seeds = [b"vault", splitter.authority.as_ref(), splitter.mint.as_ref()],
+        seeds = [b"vault", vault_authority.key().as_ref(), vault_mint.key().as_ref()],
         bump = splitter.vault_bump,
     )]
     pub vault: Account<'info, TokenAccount>,
@@ -163,9 +169,15 @@ pub struct Deposit<'info> {
 #[derive(Accounts)]
 pub struct Distribute<'info> {
     pub splitter: Account<'info, PaymentSplitter>,
+    /// CHECK: address constraint verifies this matches splitter.authority
+    #[account(address = splitter.authority)]
+    pub vault_authority: UncheckedAccount<'info>,
+    /// CHECK: address constraint verifies this matches splitter.mint
+    #[account(address = splitter.mint)]
+    pub vault_mint: UncheckedAccount<'info>,
     #[account(
         mut,
-        seeds = [b"vault", splitter.authority.as_ref(), splitter.mint.as_ref()],
+        seeds = [b"vault", vault_authority.key().as_ref(), vault_mint.key().as_ref()],
         bump = splitter.vault_bump,
     )]
     pub vault: Account<'info, TokenAccount>,
