@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { generateProgram } from "@/src/orchestrator";
 import { scaffoldProject } from "@/src/scaffolder";
 import { spawn } from "child_process";
+import * as fs from "fs";
 import * as path from "path";
 
 export const runtime = "nodejs";
@@ -19,6 +20,15 @@ export async function POST(req: NextRequest) {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
+  }
+
+  const keypairJson = process.env.SOLANA_KEYPAIR_JSON;
+  const keypairPath = keypairJson
+    ? "/tmp/solana-keypair.json"
+    : "/Users/bond/.config/solana/apex-bot-devnet.json";
+
+  if (keypairJson) {
+    fs.writeFileSync("/tmp/solana-keypair.json", keypairJson, { mode: 0o600 });
   }
 
   const enc = new TextEncoder();
@@ -40,7 +50,10 @@ export async function POST(req: NextRequest) {
         });
 
         // ── Scaffold ──────────────────────────────────────────────────────────
-        const projectDir = scaffoldProject(result);
+        const outputBase = process.env.RAILWAY_ENVIRONMENT
+          ? "/tmp/promptforge-output"
+          : path.join(process.cwd(), "output");
+        const projectDir = scaffoldProject(result, path.join(outputBase, result.programName));
 
         // ── Build ─────────────────────────────────────────────────────────────
         const buildStart = Date.now();
@@ -76,10 +89,10 @@ export async function POST(req: NextRequest) {
           const balOut = await new Promise<string>((resolve) => {
             const child = spawn(
               "solana",
-              ["balance", "--url", "devnet", "--keypair", "/Users/bond/.config/solana/apex-bot-devnet.json"],
+              ["balance", "--url", "devnet", "--keypair", keypairPath],
               {
                 stdio: ["ignore", "pipe", "pipe"],
-                env: { ...process.env, HOME: process.env.HOME ?? "/Users/bond" },
+                env: { ...process.env, HOME: process.env.HOME ?? "/root" },
               }
             );
             let out = "";
@@ -107,11 +120,11 @@ export async function POST(req: NextRequest) {
             [
               "program", "deploy", soPath,
               "--url", "devnet",
-              "--keypair", "/Users/bond/.config/solana/apex-bot-devnet.json",
+              "--keypair", keypairPath,
             ],
             {
               stdio: ["ignore", "pipe", "pipe"],
-              env: { ...process.env, HOME: process.env.HOME ?? "/Users/bond" },
+              env: { ...process.env, HOME: process.env.HOME ?? "/root" },
             }
           );
 

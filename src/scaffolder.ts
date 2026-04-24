@@ -10,8 +10,10 @@ export function scaffoldProject(
   result: GenerationResult,
   outputDir?: string
 ): string {
-  const projectDir =
-    outputDir || path.join(process.cwd(), "output", result.programName);
+  const defaultBase = process.env.RAILWAY_ENVIRONMENT
+    ? "/tmp/promptforge-output"
+    : path.join(process.cwd(), "output");
+  const projectDir = outputDir || path.join(defaultBase, result.programName);
 
   // Create directory structure
   const dirs = [
