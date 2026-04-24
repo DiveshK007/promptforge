@@ -1,5 +1,4 @@
 output/
-templates/
 *.so
 *.d
 target/
